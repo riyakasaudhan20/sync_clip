@@ -78,7 +78,7 @@ export class EncryptionService {
         const encryptedData = await crypto.subtle.encrypt(
             {
                 name: this.ALGORITHM,
-                iv: iv,
+                iv: iv as any,
             },
             key,
             data
@@ -86,7 +86,7 @@ export class EncryptionService {
 
         // Convert to base64 for transmission
         const encryptedBase64 = this.arrayBufferToBase64(encryptedData);
-        const ivBase64 = this.arrayBufferToBase64(iv);
+        const ivBase64 = this.arrayBufferToBase64(iv.buffer as ArrayBuffer);
 
         return {
             encrypted: encryptedBase64,
