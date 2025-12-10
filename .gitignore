@@ -17,7 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/  <-- Removed this as it blocks web-client/src/lib
 lib64/
 parts/
 sdist/
