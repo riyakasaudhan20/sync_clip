@@ -46,12 +46,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         checkAuth();
     }, []);
 
+    // Helper for generating UUIDs in both secure (HTTPS) and insecure (HTTP) contexts
+    const generateUUID = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        // Fallback for insecure contexts (e.g. mobile HTTP)
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
     const registerDevice = async () => {
         // Get device information
         const deviceInfo = {
             user_agent: navigator.userAgent,
             platform: navigator.platform,
-            device_id: crypto.randomUUID(),
+            device_id: generateUUID(),
             timestamp: Date.now(),
         };
 
@@ -91,7 +103,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(userData);
             setIsAuthenticated(true);
         } catch (error: any) {
-            throw new Error(error.response?.data?.detail || 'Login failed');
+            const detail = error.response?.data?.detail;
+            const errorMessage = typeof detail === 'string'
+                ? detail
+                : typeof detail === 'object'
+                    ? JSON.stringify(detail)
+                    : 'Login failed';
+            throw new Error(errorMessage);
         }
     };
 
@@ -114,7 +132,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(userData);
             setIsAuthenticated(true);
         } catch (error: any) {
-            throw new Error(error.response?.data?.detail || 'Registration failed');
+            const detail = error.response?.data?.detail;
+            const errorMessage = typeof detail === 'string'
+                ? detail
+                : typeof detail === 'object'
+                    ? JSON.stringify(detail)
+                    : 'Registration failed';
+            throw new Error(errorMessage);
         }
     };
 
