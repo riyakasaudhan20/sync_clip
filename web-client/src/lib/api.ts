@@ -7,8 +7,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
 
 // Create axios instance with default configuration
+// Fix double prefix issue: check if API_URL already includes /api/v1
+const baseURL = API_URL.endsWith('/api/v1')
+    ? API_URL
+    : `${API_URL}/api/v1`;
+
 const apiClient: AxiosInstance = axios.create({
-    baseURL: `${API_URL}/api/v1`,
+    baseURL,
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
