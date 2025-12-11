@@ -6,6 +6,18 @@ import { oauthAPI, deviceAPI } from '@/lib/api';
 import { EncryptionService } from '@/lib/encryption';
 import { Clipboard } from 'lucide-react';
 
+// Helper for generating UUIDs in both secure (HTTPS) and insecure (HTTP) contexts
+const generateUUID = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    // Fallback for insecure contexts (e.g. mobile HTTP)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+};
+
 function OAuthCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -83,7 +95,7 @@ function OAuthCallbackContent() {
                 const deviceInfo = {
                     user_agent: navigator.userAgent,
                     platform: navigator.platform,
-                    device_id: crypto.randomUUID(),
+                    device_id: generateUUID(),
                     timestamp: Date.now(),
                 };
 
@@ -128,7 +140,12 @@ function OAuthCallbackContent() {
                 let errorMessage = 'Failed to complete Google sign-in';
 
                 if (err?.response?.data?.detail) {
-                    errorMessage = err.response.data.detail;
+                    const detail = err.response.data.detail;
+                    errorMessage = typeof detail === 'string'
+                        ? detail
+                        : typeof detail === 'object'
+                            ? JSON.stringify(detail)
+                            : 'Unknown error occurred';
                 } else if (err?.message?.includes('timeout')) {
                     errorMessage = 'Request timed out. Please check your connection and try again.';
                 } else if (err?.message?.includes('Network')) {
