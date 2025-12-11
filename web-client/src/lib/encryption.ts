@@ -8,16 +8,31 @@ export class EncryptionService {
     private static KEY_LENGTH = 256;
     private static IV_LENGTH = 12; // 96 bits for GCM
 
+    private static SALT = 'sync-clip-default-salt-v1'; // Should be env var in production
+
     /**
-     * Generate a new encryption key and store in localStorage
+     * Derive encryption key from User ID and store in localStorage
      */
-    static async generateKey(): Promise<CryptoKey> {
-        const key = await crypto.subtle.generateKey(
+    static async deriveKey(userId: string): Promise<CryptoKey> {
+        const encoder = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode(userId),
+            'PBKDF2',
+            false,
+            ['deriveBits', 'deriveKey']
+        );
+
+        const key = await crypto.subtle.deriveKey(
             {
-                name: this.ALGORITHM,
-                length: this.KEY_LENGTH,
+                name: 'PBKDF2',
+                salt: encoder.encode(this.SALT),
+                iterations: 100000,
+                hash: 'SHA-256'
             },
-            true, // extractable
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            true,
             ['encrypt', 'decrypt']
         );
 
@@ -25,11 +40,15 @@ export class EncryptionService {
         const exported = await crypto.subtle.exportKey('jwk', key);
         localStorage.setItem('encryption_key', JSON.stringify(exported));
 
+        // Also store the user ID this key belongs to, for validation
+        localStorage.setItem('encryption_user_id', userId);
+
         return key;
     }
 
     /**
-     * Get or create encryption key from localStorage
+     * Get encryption key from localStorage.
+     * Note: Now returns null if key is missing, requiring explicit initialization.
      */
     static async getKey(): Promise<CryptoKey> {
         const storedKey = localStorage.getItem('encryption_key');
@@ -48,8 +67,7 @@ export class EncryptionService {
             );
         }
 
-        // Generate new key if not found
-        return await this.generateKey();
+        throw new Error('Encryption key not initialized. Please login again.');
     }
 
     /**

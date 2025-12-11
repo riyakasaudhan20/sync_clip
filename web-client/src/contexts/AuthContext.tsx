@@ -33,7 +33,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const userData = await authAPI.getCurrentUser();
                     setUser(userData);
                     setDeviceId(storedDeviceId);
-                    setIsAuthenticated(true);
+
+                    // Re-derive key from user ID to ensure it exists
+                    if (userData?.id) {
+                        try {
+                            await EncryptionService.deriveKey(userData.id);
+                            setIsAuthenticated(true);
+                        } catch (err) {
+                            console.error('Failed to restore encryption key:', err);
+                            logout();
+                        }
+                    } else {
+                        logout();
+                    }
                 } catch (error) {
                     // Token invalid, clear storage
                     logout();
@@ -100,8 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Register device
             await registerDevice();
 
-            // Ensure encryption key exists (but don't regenerate if exists)
-            await EncryptionService.getKey();
+            // Derive deterministic encryption key from User ID
+            await EncryptionService.deriveKey(response.user_id);
 
             // Get user info
             const userData = await authAPI.getCurrentUser();
@@ -129,8 +141,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Register device
             await registerDevice();
 
-            // Ensure encryption key exists (but don't regenerate if exists)
-            await EncryptionService.getKey();
+            // Derive deterministic encryption key from User ID
+            await EncryptionService.deriveKey(response.user_id);
 
             // Get user info
             const userData = await authAPI.getCurrentUser();

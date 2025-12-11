@@ -119,7 +119,8 @@ function OAuthCallbackContent() {
 
                 // Ensure encryption key exists
                 console.log('Step 4: Ensuring encryption key exists');
-                await EncryptionService.getKey();
+                // Derive deterministic encryption key from User ID
+                await EncryptionService.deriveKey(response.user_id);
                 console.log('Step 4: Encryption key ready');
 
                 console.log('OAuth flow completed successfully!');
