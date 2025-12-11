@@ -99,9 +99,12 @@ function OAuthCallbackContent() {
                     timestamp: Date.now(),
                 };
 
-                const deviceType = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent)
-                    ? 'mobile'
-                    : 'web';
+                const deviceType = (() => {
+                    const ua = navigator.userAgent.toLowerCase();
+                    if (ua.includes('android')) return 'android';
+                    if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) return 'ios';
+                    return 'web';
+                })();
 
                 const deviceName = `${deviceType} - ${navigator.platform}`;
                 console.log('Device type:', deviceType);

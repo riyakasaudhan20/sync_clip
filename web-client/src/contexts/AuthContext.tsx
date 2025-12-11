@@ -68,9 +68,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         // Determine device type
-        const deviceType = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent)
-            ? 'mobile'
-            : 'web';
+        let deviceType = 'web';
+        const ua = navigator.userAgent.toLowerCase();
+
+        if (ua.includes('android')) {
+            deviceType = 'android';
+        } else if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) {
+            deviceType = 'ios';
+        }
 
         const deviceName = `${deviceType} - ${navigator.platform}`;
 
